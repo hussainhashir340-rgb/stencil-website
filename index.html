@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STENCIL — Custom Screen Printing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Stardos+Stencil:wght@400;700&family=Work+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1A1815;
+    --ink-soft:#242019;
+    --ink-softer:#332C24;
+    --canvas:#EDE6D6;
+    --white:#FAF8F3;
+    --yellow:#E8B023;
+    --rust:#A6402F;
+    --gray:#8A8378;
+    --line: rgba(237,230,214,0.14);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--ink);
+    color:var(--canvas);
+    font-family:'Work Sans', sans-serif;
+    line-height:1.5;
+    overflow-x:hidden;
+  }
+  ::selection{background:var(--yellow); color:var(--ink);}
+
+  h1,h2,h3{
+    font-family:'Stardos Stencil', cursive;
+    font-weight:700;
+    letter-spacing:0.02em;
+    text-transform:uppercase;
+    line-height:1.05;
+  }
+
+  .mono{ font-family:'Space Mono', monospace; }
+
+  a{color:inherit; text-decoration:none;}
+
+  .wrap{
+    max-width:1180px;
+    margin:0 auto;
+    padding:0 32px;
+  }
+
+  /* registration mark - authentic print-production crosshair */
+  .regmark{
+    position:relative;
+    width:18px; height:18px;
+    flex-shrink:0;
+  }
+  .regmark::before, .regmark::after{
+    content:'';
+    position:absolute;
+    background:var(--gray);
+  }
+  .regmark::before{ top:50%; left:0; width:100%; height:1px; transform:translateY(-50%);}
+  .regmark::after{ left:50%; top:0; height:100%; width:1px; transform:translateX(-50%);}
+  .regmark-circle{
+    position:absolute; top:50%; left:50%; width:9px; height:9px;
+    border:1px solid var(--gray); border-radius:50%;
+    transform:translate(-50%,-50%);
+  }
+
+  /* ---------- NAV ---------- */
+  header{
+    position:fixed; top:0; left:0; right:0; z-index:100;
+    background:rgba(26,24,21,0.88);
+    backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--line);
+  }
+  nav.wrap{
+    display:flex; align-items:center; justify-content:space-between;
+    height:72px;
+  }
+  .logo{
+    display:flex; align-items:center; gap:10px;
+    font-family:'Stardos Stencil', cursive;
+    font-size:22px;
+    letter-spacing:0.06em;
+  }
+  .navlinks{ display:flex; gap:36px; align-items:center;}
+  .navlinks a{
+    font-family:'Space Mono', monospace;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:0.12em;
+    color:var(--gray);
+    transition:color .2s;
+  }
+  .navlinks a:hover{ color:var(--yellow); }
+  .nav-cta{
+    border:1px solid var(--canvas);
+    padding:9px 18px;
+    font-size:12px !important;
+    color:var(--canvas) !important;
+  }
+  .nav-cta:hover{
+    background:var(--yellow); border-color:var(--yellow); color:var(--ink) !important;
+  }
+  .navtoggle{ display:none; }
+
+  /* ---------- HERO ---------- */
+  .hero{
+    position:relative;
+    padding:200px 0 140px;
+    overflow:hidden;
+  }
+  .hero-texture{
+    position:absolute; inset:0;
+    opacity:0.5;
+    pointer-events:none;
+  }
+  .eyebrow{
+    display:flex; align-items:center; gap:12px;
+    font-family:'Space Mono', monospace;
+    font-size:12px; letter-spacing:0.18em; text-transform:uppercase;
+    color:var(--rust);
+    margin-bottom:28px;
+  }
+  .eyebrow::before{ content:''; width:26px; height:1px; background:var(--rust);}
+  .hero h1{
+    font-size:clamp(56px, 10vw, 132px);
+    color:var(--canvas);
+    position:relative;
+    display:inline-block;
+  }
+  .hero h1 .spray{
+    position:relative;
+    color:var(--yellow);
+  }
+  .hero-sub{
+    max-width:560px;
+    font-size:19px;
+    color:var(--gray);
+    margin:32px 0 44px;
+  }
+  .hero-actions{ display:flex; gap:18px; flex-wrap:wrap; align-items:center;}
+  .btn{
+    font-family:'Space Mono', monospace;
+    font-size:13px;
+    text-transform:uppercase;
+    letter-spacing:0.1em;
+    padding:16px 30px;
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    cursor:pointer;
+    border:none;
+    transition:transform .18s ease, background .18s ease;
+  }
+  .btn-primary{
+    background:var(--yellow);
+    color:var(--ink);
+  }
+  .btn-primary:hover{ transform:translate(-2px,-2px); background:#f0bc3d;}
+  .btn-ghost{
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--canvas);
+  }
+  .btn-ghost:hover{ border-color:var(--canvas); }
+
+  .hero-stats{
+    display:flex; gap:56px;
+    margin-top:90px;
+    padding-top:32px;
+    border-top:1px solid var(--line);
+    flex-wrap:wrap;
+  }
+  .stat-num{
+    font-family:'Stardos Stencil', cursive;
+    font-size:34px;
+    color:var(--canvas);
+  }
+  .stat-label{
+    font-family:'Space Mono', monospace;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.1em;
+    color:var(--gray);
+    margin-top:4px;
+  }
+
+  /* section framing with registration marks in corners */
+  .section{
+    position:relative;
+    padding:120px 0;
+    border-top:1px solid var(--line);
+  }
+  .section-tag{
+    display:flex; align-items:center; gap:12px;
+    margin-bottom:20px;
+  }
+  .section-tag span{
+    font-family:'Space Mono', monospace;
+    font-size:12px;
+    letter-spacing:0.16em;
+    text-transform:uppercase;
+    color:var(--gray);
+  }
+  .section-head{
+    display:flex; justify-content:space-between; align-items:flex-end;
+    gap:40px; margin-bottom:64px; flex-wrap:wrap;
+  }
+  .section-head h2{ font-size:clamp(32px,5vw,52px); color:var(--canvas); max-width:600px;}
+  .section-head p{ color:var(--gray); max-width:320px; font-size:15px;}
+
+  /* ---------- PROCESS ---------- */
+  .process{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+  }
+  .process-step{
+    background:var(--ink);
+    padding:40px 28px;
+    position:relative;
+  }
+  .process-step .num{
+    font-family:'Space Mono', monospace;
+    color:var(--rust);
+    font-size:13px;
+    margin-bottom:24px;
+    display:block;
+  }
+  .process-step h3{
+    font-size:22px;
+    color:var(--canvas);
+    margin-bottom:12px;
+  }
+  .process-step p{
+    color:var(--gray);
+    font-size:14px;
+  }
+
+  /* ---------- PROOF SHEET GRID (products) ---------- */
+  .proof-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:28px;
+  }
+  .proof-card{
+    background:var(--canvas);
+    color:var(--ink);
+    padding:22px 22px 26px;
+    position:relative;
+    transform:rotate(var(--r,0deg));
+    transition:transform .25s ease, box-shadow .25s ease;
+    box-shadow:0 12px 24px rgba(0,0,0,0.28);
+  }
+  .proof-card:nth-child(1){ --r:-1.4deg; }
+  .proof-card:nth-child(2){ --r:0.8deg; }
+  .proof-card:nth-child(3){ --r:-0.5deg; }
+  .proof-card:nth-child(4){ --r:1.2deg; }
+  .proof-card:nth-child(5){ --r:-0.9deg; }
+  .proof-card:nth-child(6){ --r:0.5deg; }
+  .proof-card:hover{ transform:rotate(0deg) translateY(-6px); box-shadow:0 20px 34px rgba(0,0,0,0.38); }
+  .proof-tape{
+    position:absolute; top:-10px; left:50%; transform:translateX(-50%) rotate(-2deg);
+    width:70px; height:22px;
+    background:rgba(232,176,35,0.55);
+    border:1px solid rgba(0,0,0,0.06);
+  }
+  .proof-swatch{
+    width:100%; aspect-ratio:4/3.2;
+    border:1px dashed rgba(26,24,21,0.35);
+    display:flex; align-items:center; justify-content:center;
+    margin-bottom:18px;
+    position:relative;
+    overflow:hidden;
+  }
+  .proof-swatch svg{ width:78%; height:78%; }
+  .proof-title{ font-family:'Stardos Stencil', cursive; font-size:20px; text-transform:uppercase; margin-bottom:6px;}
+  .proof-meta{ font-family:'Space Mono', monospace; font-size:11px; color:#6b6560; display:flex; justify-content:space-between; text-transform:uppercase; letter-spacing:0.06em;}
+
+  /* ---------- ORDER FORM ---------- */
+  .ticket{
+    background:var(--ink-soft);
+    border:1px solid var(--line);
+    position:relative;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+  .ticket-side{
+    padding:56px;
+  }
+  .ticket-side.left{
+    border-right:1px dashed var(--line);
+  }
+  .ticket-eyebrow{
+    font-family:'Space Mono', monospace;
+    font-size:11px; letter-spacing:0.16em; text-transform:uppercase;
+    color:var(--rust); margin-bottom:18px;
+  }
+  .ticket h2{ font-size:32px; color:var(--canvas); margin-bottom:20px;}
+  .ticket p.desc{ color:var(--gray); font-size:15px; margin-bottom:36px; max-width:380px;}
+  .field-group{ margin-bottom:26px; }
+  .field-label{
+    font-family:'Space Mono', monospace;
+    font-size:11px; text-transform:uppercase; letter-spacing:0.1em;
+    color:var(--gray); display:block; margin-bottom:10px;
+  }
+  .pill-row{ display:flex; gap:10px; flex-wrap:wrap; }
+  .pill{
+    padding:10px 16px;
+    border:1px solid var(--line);
+    font-family:'Space Mono', monospace;
+    font-size:12px;
+    color:var(--canvas);
+    cursor:pointer;
+    background:transparent;
+    transition:all .15s;
+  }
+  .pill.active, .pill:hover{
+    border-color:var(--yellow);
+    color:var(--yellow);
+  }
+  .swatch-row{ display:flex; gap:10px; flex-wrap:wrap; }
+  .swatch{
+    width:32px; height:32px;
+    border-radius:50%;
+    cursor:pointer;
+    border:2px solid transparent;
+    position:relative;
+  }
+  .swatch.active{ border-color:var(--yellow); }
+  input[type="text"], input[type="email"], input[type="number"], textarea, select{
+    width:100%;
+    background:var(--ink);
+    border:1px solid var(--line);
+    color:var(--canvas);
+    padding:14px 16px;
+    font-family:'Work Sans', sans-serif;
+    font-size:14px;
+  }
+  input:focus, textarea:focus, select:focus{
+    outline:none; border-color:var(--yellow);
+  }
+  textarea{ resize:vertical; min-height:90px; }
+  .row-2{ display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  .upload-box{
+    border:1px dashed var(--line);
+    padding:28px;
+    text-align:center;
+    color:var(--gray);
+    font-family:'Space Mono', monospace;
+    font-size:12px;
+    cursor:pointer;
+    transition:border-color .2s;
+  }
+  .upload-box:hover{ border-color:var(--yellow); color:var(--yellow); }
+  #upload-container{
+    display:grid;
+    gap:12px;
+  }
+  #upload-container.multi{
+    grid-template-columns:1fr 1fr 1fr;
+  }
+  .upload-box .upload-slot-label{
+    display:block;
+    font-family:'Space Mono', monospace;
+    font-size:10px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--rust);
+    margin-bottom:8px;
+  }
+  @media (max-width:520px){
+    #upload-container.multi{ grid-template-columns:1fr; }
+  }
+  .order-summary{
+    background:var(--ink-softer);
+    padding:24px;
+    margin-bottom:26px;
+    font-family:'Space Mono', monospace;
+    font-size:12px;
+  }
+  .order-summary .line{
+    display:flex; justify-content:space-between;
+    padding:8px 0;
+    border-bottom:1px solid var(--line);
+    color:var(--gray);
+  }
+  .order-summary .line span:last-child{ color:var(--canvas); }
+  .order-summary .total{
+    display:flex; justify-content:space-between;
+    padding-top:14px; margin-top:8px;
+    font-size:15px; color:var(--yellow);
+  }
+  .submit-btn{
+    width:100%;
+    background:var(--yellow);
+    color:var(--ink);
+    border:none;
+    padding:18px;
+    font-family:'Space Mono', monospace;
+    text-transform:uppercase;
+    letter-spacing:0.1em;
+    font-size:13px;
+    cursor:pointer;
+    transition:background .2s;
+  }
+  .submit-btn:hover{ background:#f0bc3d; }
+  .stamp{
+    position:absolute;
+    top:36px; right:36px;
+    border:2px solid var(--rust);
+    color:var(--rust);
+    font-family:'Space Mono', monospace;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.14em;
+    padding:6px 12px;
+    transform:rotate(6deg);
+    opacity:0.85;
+  }
+  .confirm{
+    display:none;
+    text-align:center;
+    padding:40px 20px;
+  }
+  .confirm.show{ display:block; }
+  .confirm .stamp-big{
+    display:inline-block;
+    border:3px solid var(--yellow);
+    color:var(--yellow);
+    font-family:'Stardos Stencil', cursive;
+    font-size:30px;
+    padding:14px 28px;
+    transform:rotate(-4deg);
+    margin-bottom:24px;
+    animation:stampIn .35s ease-out;
+  }
+  @keyframes stampIn{
+    0%{ transform:rotate(-4deg) scale(2); opacity:0; }
+    60%{ opacity:1; }
+    100%{ transform:rotate(-4deg) scale(1); opacity:1; }
+  }
+  .confirm p{ color:var(--gray); font-family:'Space Mono', monospace; font-size:13px; }
+
+  /* ---------- FOOTER ---------- */
+  footer{
+    border-top:1px solid var(--line);
+    padding:64px 0 40px;
+  }
+  .footer-top{
+    display:flex; justify-content:space-between; align-items:flex-start;
+    gap:40px; flex-wrap:wrap; margin-bottom:56px;
+  }
+  .footer-cols{ display:flex; gap:80px; flex-wrap:wrap; }
+  .footer-col h4{
+    font-family:'Space Mono', monospace;
+    font-size:11px; text-transform:uppercase; letter-spacing:0.12em;
+    color:var(--gray); margin-bottom:16px;
+  }
+  .footer-col a, .footer-col p{
+    display:block; color:var(--canvas); font-size:14px; margin-bottom:10px;
+  }
+  .footer-bottom{
+    display:flex; justify-content:space-between;
+    padding-top:24px; border-top:1px solid var(--line);
+    font-family:'Space Mono', monospace; font-size:11px; color:var(--gray);
+    flex-wrap:wrap; gap:12px;
+  }
+
+  @media (max-width:860px){
+    .navlinks{ display:none; }
+    .hero{ padding:150px 0 90px; }
+    .process{ grid-template-columns:1fr 1fr; }
+    .proof-grid{ grid-template-columns:1fr 1fr; }
+    .ticket{ grid-template-columns:1fr; }
+    .ticket-side.left{ border-right:none; border-bottom:1px dashed var(--line); }
+    .row-2{ grid-template-columns:1fr; }
+    .footer-cols{ gap:40px; }
+  }
+  @media (max-width:520px){
+    .proof-grid{ grid-template-columns:1fr; }
+    .process{ grid-template-columns:1fr; }
+    .wrap{ padding:0 20px; }
+    .ticket-side{ padding:32px 24px; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.001ms !important; transition-duration:0.001ms !important; }
+    html{ scroll-behavior:auto; }
+  }
+
+  a:focus-visible, button:focus-visible, .pill:focus-visible, .swatch:focus-visible, input:focus-visible, textarea:focus-visible{
+    outline:2px solid var(--yellow);
+    outline-offset:2px;
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+  <filter id="spray">
+    <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" result="noise" seed="7"/>
+    <feDisplacementMap in="SourceGraphic" in2="noise" scale="6"/>
+  </filter>
+  <filter id="grain">
+    <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch" result="noise"/>
+    <feColorMatrix in="noise" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.05 0"/>
+  </filter>
+</svg>
+
+<header>
+  <nav class="wrap">
+    <div class="logo">
+      <div class="regmark"><div class="regmark-circle"></div></div>
+      STENCIL
+    </div>
+    <div class="navlinks">
+      <a href="#process">Process</a>
+      <a href="#order" class="nav-cta">Start an order</a>
+    </div>
+  </nav>
+</header>
+
+<section class="hero">
+  <svg class="hero-texture" viewBox="0 0 1200 500" preserveAspectRatio="none" aria-hidden="true">
+    <rect width="1200" height="500" filter="url(#grain)" fill="#EDE6D6"/>
+  </svg>
+  <div class="wrap">
+    <div class="eyebrow">Custom screen printing, cut &amp; pressed to order</div>
+    <h1 style="filter:url(#spray)">CUT.<br>PRESS.<br><span class="spray">WEAR IT.</span></h1>
+    <p class="hero-sub">Stencil is a small-run print shop. Send us your design, pick your garment, and we cut, screen, and press every order by hand — no minimums, no templates.</p>
+    <div class="hero-actions">
+      <a href="#order" class="btn btn-primary">Start your order →</a>
+      <a href="#process" class="btn btn-ghost">See how it works</a>
+    </div>
+    <div class="hero-stats">
+      <div>
+        <div class="stat-num">1</div>
+        <div class="stat-label">Shirt minimum order</div>
+      </div>
+      <div>
+        <div class="stat-num">3–5</div>
+        <div class="stat-label">Business days to press</div>
+      </div>
+      <div>
+        <div class="stat-num">12oz</div>
+        <div class="stat-label">Heavyweight cotton stock</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="process">
+  <div class="wrap">
+    <div class="section-tag"><div class="regmark"><div class="regmark-circle"></div></div><span>How an order gets made</span></div>
+    <div class="section-head">
+      <h2>From your file to a folded shirt, four stages.</h2>
+      <p>Every order moves through the same shop floor, in the same order, whether it's one shirt or two hundred.</p>
+    </div>
+    <div class="process">
+      <div class="process-step">
+        <span class="num mono">01 — DESIGN</span>
+        <h3>You send the art</h3>
+        <p>Upload a design or describe what you want. We check resolution and colors before anything gets cut.</p>
+      </div>
+      <div class="process-step">
+        <span class="num mono">02 — STENCIL</span>
+        <h3>We cut the screen</h3>
+        <p>Your art is burned onto a mesh screen — one screen per color, by hand, in-house.</p>
+      </div>
+      <div class="process-step">
+        <span class="num mono">03 — PRESS</span>
+        <h3>Ink meets fabric</h3>
+        <p>Each shirt is loaded onto the press and pulled by hand, then cured so the ink won't crack or fade.</p>
+      </div>
+      <div class="process-step">
+        <span class="num mono">04 — SHIP</span>
+        <h3>Folded and out the door</h3>
+        <p>Quality-checked, folded, and shipped or ready for pickup — tracking sent the moment it leaves the shop.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="order">
+  <div class="wrap">
+    <div class="section-tag"><div class="regmark"><div class="regmark-circle"></div></div><span>Work order</span></div>
+    <div class="section-head">
+      <h2>Start your order.</h2>
+      <p>Fill out the ticket. We'll follow up by email with a proof and a quote before anything's cut.</p>
+    </div>
+
+    <div class="ticket" id="ticket-form">
+      <div class="stamp">Ticket #ST-241</div>
+
+      <div class="ticket-side left">
+        <div class="ticket-eyebrow">01 — Garment &amp; print</div>
+        <h2 style="font-size:24px;">The basics</h2>
+        <p class="desc">Pick what you're printing on and where the design goes.</p>
+
+        <div class="field-group">
+          <span class="field-label">Garment</span>
+          <div class="pill-row" data-group="garment">
+            <button type="button" class="pill active" data-val="Tee — RM55">Tee</button>
+            <button type="button" class="pill" data-val="Long sleeve — RM70">Long sleeve</button>
+            <button type="button" class="pill" data-val="Hoodie — RM85">Hoodie</button>
+            <button type="button" class="pill" data-val="Tote bag — RM40">Tote bag</button>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <span class="field-label">Fit</span>
+          <div class="pill-row" data-group="fit">
+            <button type="button" class="pill active" data-val="Slim fit">Slim fit</button>
+            <button type="button" class="pill" data-val="Oversized fit">Oversized fit</button>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <span class="field-label">Shirt color</span>
+          <div class="swatch-row" data-group="color">
+            <div class="swatch active" style="background:#1A1815" data-val="Black" title="Black"></div>
+            <div class="swatch" style="background:#EDE6D6" data-val="Canvas" title="Canvas"></div>
+            <div class="swatch" style="background:#A6402F" data-val="Rust" title="Rust"></div>
+            <div class="swatch" style="background:#3F4A3C" data-val="Olive" title="Olive"></div>
+            <div class="swatch" style="background:#E8B023" data-val="Yellow" title="Yellow"></div>
+            <div class="swatch" style="background:#FAF8F3; box-shadow:inset 0 0 0 1px rgba(26,24,21,0.25)" data-val="White" title="White"></div>
+            <div class="swatch" style="background:#2B3B52" data-val="Navy" title="Navy"></div>
+            <div class="swatch" style="background:#5A1F26" data-val="Burgundy" title="Burgundy"></div>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <span class="field-label">Print placement</span>
+          <div class="pill-row" data-group="placement">
+            <button type="button" class="pill active" data-val="Front">Front</button>
+            <button type="button" class="pill" data-val="Back">Back</button>
+            <button type="button" class="pill" data-val="Front & back">Front &amp; back</button>
+            <button type="button" class="pill" data-val="Sleeve">Sleeve</button>
+            <button type="button" class="pill" data-val="Front, back & sleeve" data-multi="3">Front, back &amp; sleeve — 3 designs</button>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <span class="field-label">Design complexity</span>
+          <div class="pill-row" data-group="complexity">
+            <button type="button" class="pill" data-val="No design (blank shirt)">No design (blank shirt)</button>
+            <button type="button" class="pill active" data-val="Simple (1–2 colors)">Simple (1–2 colors)</button>
+            <button type="button" class="pill" data-val="Complex (full-color / doodle art)">Complex (full-color / doodle art)</button>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <span class="field-label" id="upload-label">Upload your design</span>
+          <label id="same-design-toggle" style="display:none; align-items:center; gap:8px; margin-bottom:14px; cursor:pointer; font-family:'Space Mono', monospace; font-size:12px; color:var(--gray);">
+            <input type="checkbox" id="same-design-check" style="accent-color:var(--yellow); width:14px; height:14px;">
+            Use the same design everywhere (skip separate uploads)
+          </label>
+          <div id="upload-container">
+            <div class="upload-box" data-slot="Design" onclick="handleUploadClick(this)">Click to attach a file (PNG, SVG, PDF)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ticket-side right">
+        <div class="ticket-eyebrow">02 — Quantity &amp; contact</div>
+        <h2 style="font-size:24px;">Wrap it up</h2>
+        <p class="desc">How many, in what sizes, and where the proof should go.</p>
+
+        <div class="field-group">
+          <span class="field-label">Quantity</span>
+          <input type="number" id="qty" min="1" value="12">
+        </div>
+
+        <div class="field-group">
+          <span class="field-label">Size breakdown (optional)</span>
+          <input type="text" placeholder="e.g. 3XS, 4XL, 3M">
+        </div>
+
+        <div class="row-2">
+          <div class="field-group">
+            <span class="field-label">Your name</span>
+            <input type="text" placeholder="Jane Cooper">
+          </div>
+          <div class="field-group">
+            <span class="field-label">Email</span>
+            <input type="email" placeholder="jane@email.com">
+          </div>
+        </div>
+
+        <div class="field-group">
+          <span class="field-label">Phone number</span>
+          <input type="text" placeholder="012-345 6789">
+        </div>
+
+        <div class="field-group">
+          <span class="field-label">Delivery method</span>
+          <div class="pill-row" data-group="delivery">
+            <button type="button" class="pill active" data-val="Delivery">Delivery</button>
+            <button type="button" class="pill" data-val="Self pickup">Self pickup</button>
+          </div>
+        </div>
+
+        <div id="address-fields">
+          <div class="field-group">
+            <span class="field-label">Delivery address</span>
+            <input type="text" placeholder="Street address, unit number">
+          </div>
+          <div class="row-2">
+            <div class="field-group">
+              <span class="field-label">City</span>
+              <input type="text" placeholder="Petaling Jaya">
+            </div>
+            <div class="field-group">
+              <span class="field-label">Postcode</span>
+              <input type="text" placeholder="47810">
+            </div>
+          </div>
+          <div class="field-group">
+            <span class="field-label">State</span>
+            <select>
+              <option>Selangor</option>
+              <option>Kuala Lumpur</option>
+              <option>Johor</option>
+              <option>Penang</option>
+              <option>Perak</option>
+              <option>Sabah</option>
+              <option>Sarawak</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <span class="field-label">Notes</span>
+          <textarea placeholder="Ink colors, deadline, anything else we should know"></textarea>
+        </div>
+
+        <div class="order-summary">
+          <div class="line"><span>Garment</span><span id="sum-garment">Tee — RM55</span></div>
+          <div class="line"><span>Fit</span><span id="sum-fit">Slim fit</span></div>
+          <div class="line"><span>Color</span><span id="sum-color">Black</span></div>
+          <div class="line"><span>Placement</span><span id="sum-placement">Front</span></div>
+          <div class="line"><span>Quantity</span><span id="sum-qty">12</span></div>
+          <div class="total"><span>Estimated total</span><span id="sum-total">RM540.00</span></div>
+        </div>
+
+        <button class="submit-btn" id="submit-btn">Submit work order</button>
+
+        <div class="confirm" id="confirm">
+          <div class="stamp-big">RECEIVED</div>
+          <p>Ticket #ST-241 is in the queue. A proof lands in your inbox within one business day.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-top">
+      <div class="logo">
+        <div class="regmark"><div class="regmark-circle"></div></div>
+        STENCIL
+      </div>
+      <div class="footer-cols">
+        <div class="footer-col">
+          <h4>Shop</h4>
+          <a href="#process">Process</a>
+          <a href="#order">Start an order</a>
+        </div>
+        <div class="footer-col">
+          <h4>Contact</h4>
+          <p>orders@stencilprint.co</p>
+          <p>Mon–Fri, 9–5</p>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 STENCIL PRINT CO.</span>
+      <span>CUT · SCREEN · PRESS</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Pill group selection
+  document.querySelectorAll('[data-group]').forEach(function(group){
+    var isColor = group.dataset.group === 'color';
+    var isPlacement = group.dataset.group === 'placement';
+    var isDelivery = group.dataset.group === 'delivery';
+    var items = group.querySelectorAll(isColor ? '.swatch' : '.pill');
+    items.forEach(function(item){
+      item.addEventListener('click', function(){
+        items.forEach(function(i){ i.classList.remove('active'); });
+        item.classList.add('active');
+        if(isPlacement){ renderUploadBoxes(item.dataset.multi); }
+        if(isDelivery){
+          document.getElementById('address-fields').style.display =
+            (item.dataset.val === 'Self pickup') ? 'none' : 'block';
+        }
+        updateSummary();
+      });
+    });
+  });
+
+  var garmentPrices = {
+    'Tee — RM55': 55,
+    'Long sleeve — RM70': 70,
+    'Hoodie — RM85': 85,
+    'Tote bag — RM40': 40
+  };
+
+  var placementSurcharge = {
+    'Front': 5,
+    'Back': 5,
+    'Sleeve': 5,
+    'Front & back': 10,
+    'Front, back & sleeve': 15
+  };
+
+  var complexitySurcharge = {
+    'No design (blank shirt)': 0,
+    'Simple (1–2 colors)': 0,
+    'Complex (full-color / doodle art)': 10
+  };
+
+  var fitSurcharge = {
+    'Slim fit': 0,
+    'Oversized fit': 5
+  };
+
+  function renderUploadBoxes(multiCount){
+    var container = document.getElementById('upload-container');
+    var label = document.getElementById('upload-label');
+    var toggleWrap = document.getElementById('same-design-toggle');
+    var sameCheck = document.getElementById('same-design-check');
+
+    if(multiCount){
+      toggleWrap.style.display = 'flex';
+
+      if(sameCheck.checked){
+        container.classList.remove('multi');
+        container.innerHTML = '<div class="upload-box" data-slot="Design" onclick="handleUploadClick(this)">Click to attach one file — used on every placement</div>';
+        label.textContent = 'Upload your design';
+      } else {
+        var slots = ['Front design', 'Back design', 'Sleeve design'].slice(0, parseInt(multiCount, 10));
+        container.classList.add('multi');
+        container.innerHTML = slots.map(function(slot){
+          return '<div class="upload-box" data-slot="' + slot + '" onclick="handleUploadClick(this)">' +
+                 '<span class="upload-slot-label">' + slot + '</span>Click to attach a file</div>';
+        }).join('');
+        label.textContent = 'Upload a design for each placement';
+      }
+    } else {
+      toggleWrap.style.display = 'none';
+      sameCheck.checked = false;
+      container.classList.remove('multi');
+      container.innerHTML = '<div class="upload-box" data-slot="Design" onclick="handleUploadClick(this)">Click to attach a file (PNG, SVG, PDF)</div>';
+      label.textContent = 'Upload your design';
+    }
+  }
+
+  document.getElementById('same-design-check').addEventListener('change', function(){
+    var activePlacement = document.querySelector('[data-group="placement"] .pill.active');
+    renderUploadBoxes(activePlacement ? activePlacement.dataset.multi : null);
+  });
+
+  function handleUploadClick(box){
+    var slot = box.dataset.slot;
+    var label = (slot && slot !== 'Design') ? box.querySelector('.upload-slot-label').outerHTML : '';
+    box.innerHTML = label + (slot === 'Design' ? 'design-final-v2.png attached ✓' : slot.split(' ')[0].toLowerCase() + '-design.png attached ✓');
+  }
+
+  function updateSummary(){
+    var garmentEl = document.querySelector('[data-group="garment"] .pill.active');
+    var fitEl = document.querySelector('[data-group="fit"] .pill.active');
+    var colorEl = document.querySelector('[data-group="color"] .swatch.active');
+    var placementEl = document.querySelector('[data-group="placement"] .pill.active');
+    var complexityEl = document.querySelector('[data-group="complexity"] .pill.active');
+    var qty = parseInt(document.getElementById('qty').value, 10) || 0;
+
+    var garmentVal = garmentEl ? garmentEl.dataset.val : 'Tee — RM55';
+    var fitVal = fitEl ? fitEl.dataset.val : 'Slim fit';
+    var colorVal = colorEl ? colorEl.dataset.val : 'Black';
+    var placementVal = placementEl ? placementEl.dataset.val : 'Front';
+    var complexityVal = complexityEl ? complexityEl.dataset.val : 'Simple (1–2 colors)';
+
+    document.getElementById('sum-garment').textContent = garmentVal;
+    document.getElementById('sum-fit').textContent = fitVal;
+    document.getElementById('sum-color').textContent = colorVal;
+    document.getElementById('sum-placement').textContent = placementVal;
+    // complexity surcharge is applied to the total below but not shown as its own line
+    document.getElementById('sum-qty').textContent = qty;
+
+    var unitPrice = garmentPrices[garmentVal] || 55;
+    var placementAdd = placementSurcharge[placementVal] || 0;
+    var complexityAdd = complexitySurcharge[complexityVal] || 0;
+    var fitAdd = fitSurcharge[fitVal] || 0;
+    var total = (unitPrice + placementAdd + complexityAdd + fitAdd) * qty;
+    document.getElementById('sum-total').textContent = 'RM' + total.toFixed(2);
+  }
+
+  document.getElementById('qty').addEventListener('input', updateSummary);
+
+  document.getElementById('submit-btn').addEventListener('click', function(){
+    var rightSide = document.querySelector('.ticket-side.right');
+    Array.from(rightSide.children).forEach(function(child){
+      if(child.id !== 'confirm'){ child.style.display = 'none'; }
+    });
+    document.getElementById('confirm').classList.add('show');
+  });
+
+  updateSummary();
+</script>
+
+</body>
+</html>
